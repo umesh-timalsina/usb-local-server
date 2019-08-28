@@ -5,6 +5,7 @@ const path = require('path');
 const port = process.env.PORT || 8886;
 const se = require('./socket-event-names');
 const usbInterface = require('./lib/usb-interface');
+const stringParserWindows = require('./lib/windows-dataparser');
 
 const app = express();
 app.use(express.static(path.join(__dirname, '/client')));
@@ -53,9 +54,15 @@ function startUSBConnection(productId, vendorId) {
     });
 
     usb.on(se.UsbReturnDataEvent, (data) => {
-        //Code to send to server goes here!
-        io.emit(se.UsbReturnDataEvent, JSON.stringify(data)); //Returning back read data to client
-        // console.log(data);
+        var isWin = process.platform === "win32";
+        if(isWin) {
+            var dataToSend = stringParserWindows(data);
+            io.emit(se.UsbReturnDataEvent, JSON.stringify(dataToSend));
+
+        }
+        else {
+            console.log('not implemented');
+        }
     });
 
     usb.on(se.UsbErrorEvent, (error) => {
